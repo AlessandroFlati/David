@@ -2,9 +2,12 @@ import pandas as pd
 
 pd.options.display.float_format = '{:.9f}'.format
 
-qx = pd.read_excel('data/data.xlsx', sheet_name=1, index_col=0, usecols='F:G')  # morire
+source_file_url = 'data/pessimisticData.xlsx'
+destination_file_url = 'newPessimisticData.xlsx'
+
+qx = pd.read_excel(source_file_url, sheet_name=1, index_col=0, usecols='F:G')  # morire
 px = pd.DataFrame(1 - qx.values, columns=['px'], index=qx.index)  # non morire
-ix = pd.read_excel('data/data.xlsx', sheet_name=1, index_col=0, usecols='C:D')  # entrare in non autonomia
+ix = pd.read_excel(source_file_url, sheet_name=1, index_col=0, usecols='C:D')  # entrare in non autonomia
 ax = pd.DataFrame(1 - ix.values, columns=['ax'], index=ix.index)  # rimanere in autonomia
 px_ax = pd.DataFrame(px.values * ax.values, columns=['px_ax'], index=ix.index)
 px_ix = pd.DataFrame(px.values * ix.values, columns=['px_ix'], index=ix.index)
@@ -19,22 +22,22 @@ qx_ix = pd.DataFrame(qx.values * ix.values, columns=['qx_ix'], index=ix.index)
 
 
 class Person:
-
     def __init__(self, age, alive, autonomous):
         self.age = age
         self.alive = alive
         self.autonomous = autonomous
-        self.p_live = px.loc[age]['px']
-        self.p_die = qx.loc[age]['qx']
-        self.p_remain_autonomous = ax.loc[age]['ax']
-        self.p_become_not_autonomous = ix.loc[age]['ix']
-        self.p_live_and_remain_autonomous = px_ax.loc[age]['px_ax']
-        self.p_live_and_become_not_autonomous = px_ix.loc[age]['px_ix']
-        self.p_die_and_remain_autonomous = qx_ax.loc[age]['qx_ax']
-        self.p_die_and_become_not_autonomous = qx_ix.loc[age]['qx_ix']
+        if age <= 100:
+            self.p_live = px.loc[age]['px']
+            self.p_die = qx.loc[age]['qx']
+            self.p_remain_autonomous = ax.loc[age]['ax']
+            self.p_become_not_autonomous = ix.loc[age]['ix']
+            self.p_live_and_remain_autonomous = px_ax.loc[age]['px_ax']
+            self.p_live_and_become_not_autonomous = px_ix.loc[age]['px_ix']
+            self.p_die_and_remain_autonomous = qx_ax.loc[age]['qx_ax']
+            self.p_die_and_become_not_autonomous = qx_ix.loc[age]['qx_ix']
 
     def get_states_for_next_year(self):
-        if not self.alive or self.age > 99:
+        if not self.alive:
             return [State(self, 1)]
         else:
             if not self.autonomous:
@@ -52,7 +55,6 @@ class Person:
 
 
 class State:
-
     def __init__(self, person, probability):
         self.person = person
         self.probability = probability
@@ -64,7 +66,6 @@ class State:
 
 
 class Life:
-
     def __init__(self, states):
         self.years = states
         self.probability = 1
@@ -96,7 +97,6 @@ class Life:
 
 
 class LifeTime:
-
     def __init__(self, person):
         self.person = person
         self.lives = [Life([State(person, 1)])]
@@ -177,13 +177,14 @@ dead_and_not_autonomous = pd.DataFrame(columns=range(1, 101 - 18), index=range(1
 dead = pd.DataFrame(columns=range(1, 101 - 18), index=range(18, 101))
 dead_or_not_autonomous = pd.DataFrame(columns=range(1, 101 - 18), index=range(18, 101))
 
-people = []
 for a in range(18, 101):
     lifetime = LifeTime(Person(a, True, True))
-    for b in range(1, 102 - a):
+    print("*** Generazione {:d} ***".format(a))
+    for b in range(1, 102-a):
         lifetime.calculate_lives_for_next_year()
         probabilities = lifetime.get_probability_of_fundamental_states()
-        # print("Checksum per un individuo di età {:d} invecchiato di {:d} anni: {:.20f} ".format(a,b,probabilities['Checksum']))
+        if "{:.10f}".format(probabilities['Checksum']) != "1.0000000000":
+            print("Checksum per un individuo di età {:d} invecchiato di {:d} anni: {:.10f} ".format(a, b, probabilities['Checksum']))
         alive_and_autonomous.loc[a][b] = probabilities['Alive and autonomous']
         alive_and_not_autonomous.loc[a][b] = probabilities['Alive and not autonomous']
         dead_and_autonomous.loc[a][b] = probabilities['Dead and autonomous']
@@ -191,7 +192,7 @@ for a in range(18, 101):
         dead.loc[a][b] = probabilities['Dead']
         dead_or_not_autonomous.loc[a][b] = probabilities['Dead or not autonomous']
 
-writer = pd.ExcelWriter('newData.xlsx')
+writer = pd.ExcelWriter(destination_file_url)
 alive_and_autonomous.to_excel(writer, 'Vivi e autonomi')
 alive_and_not_autonomous.to_excel(writer, 'Vivi e non autonomi')
 dead_and_autonomous.to_excel(writer, 'Morti da autonomi')
