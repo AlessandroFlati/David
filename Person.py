@@ -7,16 +7,14 @@ class Person:
         self.age = age
         self.alive = alive
         self.autonomous = autonomous
-
-        if self.age <= 100:
-            self.p_live = px.loc[age]['px']
-            self.p_die = qx.loc[age]['qx']
-            self.p_remain_autonomous = ax.loc[age]['ax']
-            self.p_become_not_autonomous = ix.loc[age]['ix']
-            self.p_live_and_remain_autonomous = px_ax.loc[age]['px_ax']
-            self.p_live_and_become_not_autonomous = px_ix.loc[age]['px_ix']
-            self.p_die_and_remain_autonomous = qx_ax.loc[age]['qx_ax']
-            self.p_die_and_become_not_autonomous = qx_ix.loc[age]['qx_ix']
+        self.p_live = px.loc[age]['px']
+        self.p_die = qx.loc[age]['qx']
+        self.p_remain_autonomous = ax.loc[age]['ax']
+        self.p_become_not_autonomous = ix.loc[age]['ix']
+        self.p_live_and_remain_autonomous = px_ax.loc[age]['px_ax']
+        self.p_live_and_become_not_autonomous = px_ix.loc[age]['px_ix']
+        self.p_die_and_remain_autonomous = qx_ax.loc[age]['qx_ax']
+        self.p_die_and_become_not_autonomous = qx_ix.loc[age]['qx_ix']
 
     def get_states_for_next_year(self):
         if not self.alive:
